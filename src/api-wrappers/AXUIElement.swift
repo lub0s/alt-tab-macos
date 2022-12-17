@@ -86,8 +86,8 @@ extension AXUIElement {
         return wid != 0 && size != nil &&
             (books(runningApp) || keynote(runningApp) || iina(runningApp) || (
                 // CGWindowLevel == .normalWindow helps filter out iStats Pro and other top-level pop-overs, and floating windows
-                level == CGWindow.normalLevel &&
-                    ([kAXStandardWindowSubrole, kAXDialogSubrole].contains(subrole) ||
+                    level == CGWindow.normalLevel && (
+                        [kAXStandardWindowSubrole, kAXDialogSubrole].contains(subrole) ||
                         openBoard(runningApp) ||
                         adobeAudition(runningApp, subrole) ||
                         adobeAfterEffects(runningApp, subrole) ||
@@ -98,12 +98,13 @@ extension AXUIElement {
                         vlcFullscreenVideo(runningApp, role) ||
                         sanGuoShaAirWD(runningApp) ||
                         dvdFab(runningApp) ||
-                        drBetotte(runningApp) ||
-                        androidEmulator(runningApp, title)
+                        drBetotte(runningApp)
                     ) &&
                     mustHaveIfJetbrainApp(runningApp, title, subrole, size!) &&
-                    mustHaveIfSteam(runningApp, title, role)
-            ))
+                    mustHaveIfSteam(runningApp, title, role) &&
+                    !androidEmulatorMenu(runningApp, title, subrole)
+                )
+            )
     }
 
     private static func mustHaveIfJetbrainApp(_ runningApp: NSRunningApplication, _ title: String?, _ subrole: String?, _ size: NSSize) -> Bool {
@@ -190,9 +191,9 @@ extension AXUIElement {
         return (runningApp.bundleIdentifier?.hasPrefix("org.videolan.vlc") ?? false) && role == kAXWindowRole
     }
 
-    private static func androidEmulator(_ runningApp: NSRunningApplication, _ title: String?) -> Bool {
+    private static func androidEmulatorMenu(_ runningApp: NSRunningApplication, _ title: String?, _ subrole: String?) -> Bool {
         // android emulator small vertical menu is a "window" with empty title; we exclude it
-        return title != "" && Applications.isAndroidEmulator(runningApp)
+        return Applications.isAndroidEmulator(runningApp) && title == "" && subrole == kAXDialogSubrole
     }
 
     func position() throws -> CGPoint? {
